@@ -1,0 +1,149 @@
+name: Build DEAL GNB watchface with Zeus
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-watchface.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild valid Zepp source project
+        run: |
+          import json, io, zipfile, pathlib
+          source = pathlib.Path("releases/DEAL_GNB_Balance2_TEST.zpk")
+          out = pathlib.Path("zepp-project")
+          with zipfile.ZipFile(source) as pkg, zipfile.ZipFile(io.BytesIO(pkg.read("device.zip"))) as dev:
+              bg = dev.read("assets/images/background.png")
+              aod = dev.read("assets/images/aod.png")
+          assets = out / "assets/default-target/images"
+          assets.mkdir(parents=True, exist_ok=True)
+          (assets/"background.png").write_bytes(bg)
+          (assets/"aod.png").write_bytes(aod)
+          app = {
+            "configVersion": "v3",
+            "app": {
+              "appId": 7761421,
+              "appName": "DEAL_GNB Balance 2",
+              "appType": "watchface",
+              "version": {"code": 2, "name": "1.0.1"},
+              "vender": "DEAL_GNB",
+              "description": "DEAL_GNB industrial watch face for Amazfit Balance 2",
+              "icon": "images/background.png"
+            },
+            "permissions": ["data:user.hd.step", "data:user.hd.heart_rate"],
+            "runtime": {"apiVersion": {"compatible": "2.0", "target": "4.2", "minVersion": "2.0"}},
+            "targets": {
+              "default-target": {
+                "module": {"watchface": {"path":"watchface/default-target/index","main":1,"editable":0,"lockscreen":0}},
+                "platforms": [
+                  {"name":"Amazfit Balance 2", "deviceSource":9568512},
+                  {"name":"Amazfit Balance 2", "deviceSource":9568513},
+                  {"name":"Amazfit Balance 2", "deviceSource":9568515}
+                ],
+                "designWidth": 480
+              }
+            },
+            "i18n": {"en-US":{"name":"DEAL_GNB Balance 2"}, "ru-RU":{"name":"DEAL_ГНБ Balance 2"}},
+            "defaultLanguage": "en-US",
+            "debug": False
+          }
+          (out/"app.json").write_text(json.dumps(app, ensure_ascii=False, indent=2), encoding="utf-8")
+          (out/"app.js").write_text("App({globalData:{},onCreate(){},onDestroy(){}})\n", encoding="utf-8")
+          code = r'''
+          import ui from '@zos/ui'
+          import { Time, Battery, Step, HeartRate } from '@zos/sensor'
+          import { getScene, SCENE_AOD } from '@zos/app'
+          
+          const WHITE=0xFFFFFF, YELLOW=0xFFC51A, MUTED=0xA5A8AE
+          const WD=['','ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС']
+          const MONTH=['','ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК']
+          function z(n){return String(n).padStart(2,'0')}
+          function label(x,y,w,h,size,color,value){
+            return ui.createWidget(ui.widget.TEXT,{
+              x,y,w,h,text:value,color,text_size:size,
+              text_style:ui.text_style.NONE,
+              align_h:ui.align.CENTER_H,align_v:ui.align.CENTER_V
+            })
+          }
+          function change(widget,text){if(widget)widget.setProperty(ui.prop.TEXT,String(text))}
+          function safe(callback,fallback){try{return callback()}catch(e){return fallback}}
+          let clock
+          let fields={}
+          WatchFace({
+            build(){
+              clock = new Time()
+              if(getScene() === SCENE_AOD){
+                ui.createWidget(ui.widget.FILL_RECT,{x:0,y:0,w:480,h:480,color:0x000000})
+                fields.time=label(75,195,330,94,72,WHITE,'00:00')
+                label(137,303,206,25,16,YELLOW,'DEAL_ГНБ')
+              }else{
+                ui.createWidget(ui.widget.IMG,{x:0,y:0,w:480,h:480,src:'images/background.png'})
+                fields.time=label(70,204,340,96,77,WHITE,'00:00')
+                fields.date=label(74,292,332,42,17,YELLOW,'')
+                const xs=[61,151,244,340], ws=[80,86,88,80]
+                const names=['ЗАРЯД','ШАГИ','ПУЛЬС','ПОГОДА']
+                for(let i=0;i<4;i++)label(xs[i],354,ws[i],22,12,YELLOW,names[i])
+                fields.battery=label(xs[0],380,ws[0],38,21,WHITE,'--%')
+                fields.steps=label(xs[1],380,ws[1],38,21,WHITE,'--')
+                fields.heart=label(xs[2],380,ws[2],38,21,WHITE,'--')
+                fields.weather=label(xs[3],380,ws[3],38,21,WHITE,'--°')
+                safe(()=>{
+                  const b=new Battery()
+                  change(fields.battery,b.getCurrent()+'%')
+                  b.onChange(()=>change(fields.battery,b.getCurrent()+'%'))
+                },null)
+                safe(()=>{
+                  const s=new Step()
+                  change(fields.steps,s.getCurrent())
+                  s.onChange(()=>change(fields.steps,s.getCurrent()))
+                },null)
+                safe(()=>{
+                  const h=new HeartRate()
+                  const v=h.getLast()
+                  change(fields.heart,v>0?v:'--')
+                  h.onLastChange(()=>{
+                    const latest=h.getLast()
+                    change(fields.heart,latest>0?latest:'--')
+                  })
+                },null)
+                // Weather is intentionally omitted until the core face is stable on-device.
+              }
+              const update=()=>{
+                change(fields.time,z(clock.getHours())+':'+z(clock.getMinutes()))
+                if(fields.date)change(fields.date,z(clock.getDate())+' '+MONTH[clock.getMonth()]+' '+clock.getFullYear()+'   '+(WD[clock.getDay()]||''))
+              }
+              update()
+              clock.onPerMinute(update)
+            }
+          })
+          '''
+          dest=out/"watchface/default-target/index.js"
+          dest.parent.mkdir(parents=True, exist_ok=True)
+          dest.write_text(code.strip()+"\n", encoding="utf-8")
+          print("Project reconstructed. Source JS:",len(code),"Background:",len(bg),"AOD:",len(aod))
+          
+      - name: Install official Zeus CLI
+        run: npm install --global @zeppos/zeus-cli
+      - name: Compile with Zeus CLI
+        working-directory: zepp-project
+        run: timeout 360s zeus build
+      - name: Inspect output
+        run: find zepp-project/dist -maxdepth 5 -type f -printf '%p %s bytes\n'
+      - name: Upload compiled package for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: DEAL_GNB_Balance2_Zeus_Build
+          path: zepp-project/dist/**
