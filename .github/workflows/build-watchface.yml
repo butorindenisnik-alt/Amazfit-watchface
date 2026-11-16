@@ -22,6 +22,7 @@ jobs:
           node-version: '22'
       - name: Rebuild valid Zepp source project
         run: |
+          python3 - <<'PY'
           import json, io, zipfile, pathlib
           source = pathlib.Path("releases/DEAL_GNB_Balance2_TEST.zpk")
           out = pathlib.Path("zepp-project")
@@ -135,6 +136,7 @@ jobs:
           dest.write_text(code.strip()+"\n", encoding="utf-8")
           print("Project reconstructed. Source JS:",len(code),"Background:",len(bg),"AOD:",len(aod))
           
+          PY
       - name: Install official Zeus CLI
         run: npm install --global @zeppos/zeus-cli
       - name: Compile with Zeus CLI
