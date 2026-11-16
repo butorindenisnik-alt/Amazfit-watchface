@@ -20,6 +20,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install image processing dependency
+        run: python3 -m pip install --quiet pillow
       - name: Rebuild valid Zepp source project
         run: |
           python3 - <<'PY'
@@ -31,7 +33,39 @@ jobs:
               aod = dev.read("assets/images/aod.png")
           assets = out / "assets/default-target/images"
           assets.mkdir(parents=True, exist_ok=True)
-          (assets/"background.png").write_bytes(bg)
+          from PIL import Image, ImageDraw, ImageFilter
+          # Rebuild art to 480x480: enlarge and center yellow drilling rig, add dial markers/icons.
+          image = Image.open(io.BytesIO(bg)).convert("RGBA").resize((480,480), Image.Resampling.LANCZOS)
+          logo = image.crop((128,48,356,91)).resize((278,52), Image.Resampling.LANCZOS)
+          rig  = image.crop((58,93,318,172)).resize((370,110), Image.Resampling.LANCZOS)
+          earth= image.crop((60,167,470,201)).resize((450,40), Image.Resampling.LANCZOS)
+          d = ImageDraw.Draw(image)
+          d.rectangle((45,40,433,203),fill=(2,3,6,255))
+          image.paste(logo,(101,36))
+          image.paste(rig,(53,92))
+          image.paste(earth,(16,171))
+          d = ImageDraw.Draw(image)
+          # Leave a clean, high-contrast area for live time/date.
+          d.rounded_rectangle((39,213,441,330),radius=22,fill=(1,2,4,250))
+          d.line((56,325,424,325),fill=(80,84,91,255),width=2)
+          d.rounded_rectangle((45,331,435,438),radius=13,fill=(6,7,10,253))
+          for xx in (145,239,331):
+              d.line((xx,343,xx,416),fill=(84,86,94,255),width=2)
+          # Battery, footsteps, heart and weather symbols, centered over live values.
+          Y=(255,198,16,255); W=(238,238,240,255)
+          d.rounded_rectangle((81,346,112,363),radius=3,outline=W,width=3)
+          d.rectangle((112,351,116,358),fill=W)
+          d.polygon([(97,347),(90,357),(96,357),(92,363),(106,351),(99,351)],fill=Y)
+          for x,y in [(177,348),(172,359),(196,348),(190,359)]:
+              d.ellipse((x,y,x+9,y+13),fill=Y)
+          d.polygon([(285,365),(267,349),(271,342),(280,343),(285,348),(291,343),(301,344),(304,351)],fill=Y)
+          d.line([(273,354),(280,354),(284,348),(288,360),(293,353),(299,353)],fill=(12,15,19,255),width=2)
+          d.ellipse((376,342,393,360),outline=Y,width=2)
+          d.ellipse((367,354,382,370),fill=(20,22,26,255),outline=W,width=2)
+          d.ellipse((376,350,395,370),fill=(20,22,26,255),outline=W,width=2)
+          d.rounded_rectangle((363,357,399,373),radius=6,fill=(20,22,26,255),outline=W,width=2)
+          d.arc((233,444,247,459),start=180,end=360,fill=W,width=2)
+          image.save(assets/"background.png")
           (assets/"aod.png").write_bytes(aod)
           app = {
             "configVersion": "v3",
@@ -39,7 +73,7 @@ jobs:
               "appId": 7761421,
               "appName": "DEAL_GNB Balance 2",
               "appType": "watchface",
-              "version": {"code": 2, "name": "1.0.1"},
+              "version": {"code": 3, "name": "1.0.2"},
               "vender": "DEAL_GNB",
               "description": "DEAL_GNB industrial watch face for Amazfit Balance 2",
               "icon": "images/background.png"
@@ -88,19 +122,18 @@ jobs:
               clock = new Time()
               if(getScene() === SCENE_AOD){
                 ui.createWidget(ui.widget.FILL_RECT,{x:0,y:0,w:480,h:480,color:0x000000})
-                fields.time=label(75,195,330,94,72,WHITE,'00:00')
-                label(137,303,206,25,16,YELLOW,'DEAL_ГНБ')
+                fields.time=label(65,190,350,105,80,WHITE,'00:00')
+                fields.date=label(116,287,248,28,18,YELLOW,'')
+                label(135,340,210,26,18,YELLOW,'DEAL_ГНБ')
               }else{
                 ui.createWidget(ui.widget.IMG,{x:0,y:0,w:480,h:480,src:'images/background.png'})
-                fields.time=label(70,204,340,96,77,WHITE,'00:00')
-                fields.date=label(74,292,332,42,17,YELLOW,'')
-                const xs=[61,151,244,340], ws=[80,86,88,80]
-                const names=['ЗАРЯД','ШАГИ','ПУЛЬС','ПОГОДА']
-                for(let i=0;i<4;i++)label(xs[i],354,ws[i],22,12,YELLOW,names[i])
-                fields.battery=label(xs[0],380,ws[0],38,21,WHITE,'--%')
-                fields.steps=label(xs[1],380,ws[1],38,21,WHITE,'--')
-                fields.heart=label(xs[2],380,ws[2],38,21,WHITE,'--')
-                fields.weather=label(xs[3],380,ws[3],38,21,WHITE,'--°')
+                fields.time=label(24,190,432,112,96,WHITE,'00:00')
+                fields.date=label(62,285,356,42,23,YELLOW,'')
+                const xs=[62,155,249,340], ws=[80,86,88,80]
+                fields.battery=label(xs[0],385,ws[0],36,25,WHITE,'--%')
+                fields.steps=label(xs[1],385,ws[1],36,25,WHITE,'--')
+                fields.heart=label(xs[2],385,ws[2],36,25,WHITE,'--')
+                fields.weather=label(xs[3],385,ws[3],36,25,WHITE,'--')
                 safe(()=>{
                   const b=new Battery()
                   change(fields.battery,b.getCurrent()+'%')
@@ -157,7 +190,7 @@ jobs:
               candidates=[x for x in zab.namelist() if x.endswith(".zpk") and not x.endswith("/")]
               assert len(candidates)>=1, "Compiled ZAB does not contain a ZPK package"
               zpk=zab.read(candidates[0])
-          dest=Path("releases/DEAL_GNB_Balance2_Official_1.0.1.zpk")
+          dest=Path("releases/DEAL_GNB_Balance2_Official_1.0.2.zpk")
           dest.write_bytes(zpk)
           with ZipFile(dest) as pkg:
               names=pkg.namelist()
@@ -170,9 +203,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/DEAL_GNB_Balance2_Official_1.0.1.zpk
+          git add releases/DEAL_GNB_Balance2_Official_1.0.2.zpk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish officially compiled Balance 2 test package"
+            git commit -m "Publish 1.0.2 centered dial and AOD"
             git push
           fi
       - name: Upload compiled package for review
