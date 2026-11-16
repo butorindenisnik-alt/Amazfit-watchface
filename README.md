@@ -1,20 +1,21 @@
 # DEAL_ГНБ — Amazfit Balance 2
 
-## Актуальная тестовая версия 1.0.8
+## Актуальная тестовая версия 1.0.9
 
-- [Установочный пакет v1.0.8](releases/DEAL_GNB_Balance2_Official_1.0.8.zpk)
-- [Превью обычного циферблата v1.0.8](previews/DEAL_GNB_v1.0.8_background.png)
-- [Превью AOD v1.0.8](previews/DEAL_GNB_v1.0.8_aod.png)
-- [Результат официальной сборки Zeus CLI](https://github.com/butorindenisnik-alt/Amazfit-watchface/actions/runs/43944719936)
+- **[Установочный ZPK v1.0.9](releases/DEAL_GNB_Balance2_Official_1.0.9.zpk)**
+- [Предпросмотр основного циферблата](previews/DEAL_GNB_v1.0.9_background.png)
+- [AOD, без изменений](previews/DEAL_GNB_v1.0.9_aod.png)
+- [Сборка Zeus CLI — успешна](https://github.com/butorindenisnik-alt/Amazfit-watchface/actions/runs/43946300406)
 
-Ссылка для QR-кода Zepp Developer Mode:
+QR-строка для Zepp Developer Mode:
+`zpkd1://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.0.9.zpk`
 
-`zpkd1://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.0.8.zpk`
+### Исправления v1.0.9
+- Секунды перемещены ближе к минутам, нижние края их текстовых блоков установлены на одну координату (299 px).
+- Старая нижняя панель перекрывала новую, особенно в зоне батареи. Старый внутренний слой очищен, создана единая панель с разделителями.
+- Значения батареи, шагов, пульса и температуры расположены внутри безопасной зоны круглого дисплея.
+- AOD, логотип и буровая сохранены из v1.0.8.
 
-### Изменения
-- Исправлены троеточия вместо секунд: ширина поля увеличена с 52 до 79, размер текста уменьшен с 52 до 43; минуты и секунды остаются рядом.
-- Убрана декоративная дуга над надписью DEAL_ГНБ в основном фоне, сохранены буровая и остальная компоновка.
-- AOD, дата, погода, шаги, пульс и заряд в остальном не менялись.
+Пакет официально скомпилирован Zeus CLI, ZPK проверен; отображение на реальных часах необходимо проверить.
 
-Проверена сборка Zeus и целостность ZIP/ZPK; поведение на реальных часах требует установки. Для возврата доступна [предыдущая версия 1.0.7](releases/DEAL_GNB_Balance2_Official_1.0.7.zpk).
-
+[Резервная версия 1.0.8](releases/DEAL_GNB_Balance2_Official_1.0.8.zpk)
