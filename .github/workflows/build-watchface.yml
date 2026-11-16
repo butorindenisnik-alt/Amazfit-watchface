@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-watchface.yml'
+      - 'scripts/build_v104.py'
 
 permissions:
   contents: write
@@ -16,187 +17,70 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install image processing dependency
+
+      - name: Install image dependency
         run: python3 -m pip install --quiet pillow
-      - name: Rebuild valid Zepp source project
+
+      - name: Generate watchface and inspect assets
         run: |
+          python3 scripts/build_v104.py
           python3 - <<'PY'
-          import json, io, zipfile, pathlib
-          source = pathlib.Path("releases/DEAL_GNB_Balance2_TEST.zpk")
-          out = pathlib.Path("zepp-project")
-          with zipfile.ZipFile(source) as pkg, zipfile.ZipFile(io.BytesIO(pkg.read("device.zip"))) as dev:
-              bg = dev.read("assets/images/background.png")
-              aod = dev.read("assets/images/aod.png")
-          assets = out / "assets/default-target/images"
-          assets.mkdir(parents=True, exist_ok=True)
+          import json
+          from pathlib import Path
           from PIL import Image
-          import base64
-          from io import BytesIO
-          # Full 480x480 artwork, hand-checked rod begins at machine drill head.
-          raw=base64.b64decode(pathlib.Path("assets/deal_gnb_v103.jpg.b64").read_text().replace("\n",""))
-          image=Image.open(BytesIO(raw)).convert("RGB")
-          assert image.size==(480,480), f"Unexpected art size {image.size}"
-          image.save(assets/"background.png", optimize=True)
-          print("Full-screen visual size:", image.size)
-          (assets/"aod.png").write_bytes(aod)
-          app = {
-            "configVersion": "v3",
-            "app": {
-              "appId": 7761421,
-              "appName": "DEAL_GNB Balance 2",
-              "appType": "watchface",
-              "version": {"code": 4, "name": "1.0.3"},
-              "vender": "DEAL_GNB",
-              "description": "DEAL_GNB centered dial with full screen art and screen-off AOD",
-              "icon": "images/background.png"
-            },
-            "permissions": ["data:user.hd.step", "data:user.hd.heart_rate"],
-            "runtime": {"apiVersion": {"compatible": "2.0", "target": "4.2", "minVersion": "2.0"}},
-            "targets": {
-              "default-target": {
-                "module": {"watchface": {"path":"watchface/default-target/index","main":1,"editable":0,"lockscreen":0}},
-                "platforms": [
-                  {"name":"Amazfit Balance 2", "deviceSource":9568512},
-                  {"name":"Amazfit Balance 2", "deviceSource":9568513},
-                  {"name":"Amazfit Balance 2", "deviceSource":9568515}
-                ],
-                "designWidth": 480
-              }
-            },
-            "i18n": {"en-US":{"name":"DEAL_GNB Balance 2"}, "ru-RU":{"name":"DEAL_ГНБ Balance 2"}},
-            "defaultLanguage": "en-US",
-            "debug": False
-          }
-          (out/"app.json").write_text(json.dumps(app, ensure_ascii=False, indent=2), encoding="utf-8")
-          (out/"app.js").write_text("App({globalData:{},onCreate(){},onDestroy(){}})\n", encoding="utf-8")
-          code = r'''
-          import ui from '@zos/ui'
-          import { px } from '@zos/utils'
-          import { Time, Battery, Step, HeartRate } from '@zos/sensor'
-          
-          const WHITE=0xF2F3F7
-          const YELLOW=0xFFD21A
-          const WD=['','ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС']
-          const MONTH=['','ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК']
-          const NL=ui.show_level.ONLY_NORMAL
-          const AL=ui.show_level.ONAL_AOD
-          function pad(n){return String(n).padStart(2,'0')}
-          function label(x,y,w,h,size,color,text,level){
-            return ui.createWidget(ui.widget.TEXT,{
-              x:px(x),y:px(y),w:px(w),h:px(h),text:String(text),
-              color:color,text_size:px(size),
-              text_style:ui.text_style.NONE,
-              align_h:ui.align.CENTER_H,align_v:ui.align.CENTER_V,
-              show_level:level
-            })
-          }
-          function update(w,v){if(w)w.setProperty(ui.prop.TEXT,String(v))}
-          function safe(cb){try{cb()}catch(e){}}
-          let clock
-          let items={}
-          WatchFace({
-            build(){
-              clock=new Time()
-              // The image resource and all widgets share a single 480px coordinate grid.
-              ui.createWidget(ui.widget.IMG,{
-                x:px(0),y:px(0),w:px(480),h:px(480),
-                src:'images/background.png',
-                pos_x:0,pos_y:0,
-                auto_scale:true,auto_scale_obj_fit:true,
-                show_level:NL
-              })
-              items.time=label(19,176,442,123,94,WHITE,'00:00',NL)
-              items.date=label(80,294,320,35,20,YELLOW,'',NL)
-              // Metric numbers centered precisely below the four pictograms in artwork.
-              items.battery=label(52,370,90,41,25,WHITE,'--%',NL)
-              items.steps=label(149,370,84,41,25,WHITE,'--',NL)
-              items.heart=label(245,370,84,41,25,WHITE,'--',NL)
-              items.weather=label(341,370,84,41,25,WHITE,'—',NL)
-              // Distinct watchface AOD layers instead of a one-time getScene condition.
-              ui.createWidget(ui.widget.FILL_RECT,{
-                x:px(0),y:px(0),w:px(480),h:px(480),
-                color:0x000000,show_level:AL
-              })
-              items.aodTime=label(76,187,328,115,70,WHITE,'00:00',AL)
-              items.aodDate=label(120,286,240,31,18,YELLOW,'',AL)
-              label(155,341,170,29,17,YELLOW,'DEAL_ГНБ',AL)
-              const refresh=()=>{
-                const t=pad(clock.getHours())+':'+pad(clock.getMinutes())
-                const d=pad(clock.getDate())+' '+MONTH[clock.getMonth()]+' '+clock.getFullYear()+'  '+(WD[clock.getDay()]||'')
-                update(items.time,t);update(items.date,d)
-                update(items.aodTime,t);update(items.aodDate,d)
-              }
-              refresh()
-              safe(()=>clock.onPerMinute(refresh))
-              safe(()=>{
-                const b=new Battery()
-                const refreshB=()=>update(items.battery,b.getCurrent()+'%')
-                refreshB();b.onChange(refreshB)
-              })
-              safe(()=>{
-                const s=new Step()
-                const refreshS=()=>update(items.steps,s.getCurrent())
-                refreshS();s.onChange(refreshS)
-              })
-              safe(()=>{
-                const h=new HeartRate()
-                const refreshH=()=>{const v=h.getLast();update(items.heart,v>0?v:'--')}
-                refreshH();h.onLastChange(refreshH)
-              })
-            }
-          })
-          
-          '''
-          dest=out/"watchface/default-target/index.js"
-          dest.parent.mkdir(parents=True, exist_ok=True)
-          dest.write_text(code.strip()+"\n", encoding="utf-8")
-          print('Watchface project built. Source art bytes:',(assets/'background.png').stat().st_size,'code size:',len(code))
-          
+          app = json.loads(Path('zepp-project/app.json').read_text())
+          assert app['targets']['default-target']['module']['watchface']['lockscreen'] == 1
+          assert app['app']['version']['name'] == '1.0.4'
+          img=Image.open('zepp-project/assets/default-target/images/background.png')
+          assert img.size == (480,480), img.size
+          print('Source verified, real full-size background:',img.size)
           PY
+
       - name: Install official Zeus CLI
         run: npm install --global @zeppos/zeus-cli
-      - name: Compile with Zeus CLI
+
+      - name: Compile with Zeus
         working-directory: zepp-project
         run: timeout 360s zeus build
-      - name: Inspect output
-        run: find zepp-project/dist -maxdepth 5 -type f -printf '%p %s bytes\n'
-      - name: Extract compiled ZPK and verify integrity
-        shell: bash
+
+      - name: Verify ZPK and extract
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          from zipfile import ZipFile, BadZipFile
-          packages=list(Path("zepp-project/dist").rglob("*.zab"))
-          assert len(packages)==1, f"Expected a single ZAB, found: {packages}"
-          with ZipFile(packages[0]) as zab:
-              print("ZAB entries:", zab.namelist())
-              candidates=[x for x in zab.namelist() if x.endswith(".zpk") and not x.endswith("/")]
-              assert len(candidates)>=1, "Compiled ZAB does not contain a ZPK package"
-              zpk=zab.read(candidates[0])
-          dest=Path("releases/DEAL_GNB_Balance2_Official_1.0.3.zpk")
-          dest.write_bytes(zpk)
-          with ZipFile(dest) as pkg:
-              names=pkg.namelist()
-              print("ZPK entries:",names)
-              assert any(n.lower()=="device.zip" for n in names), "device.zip missing"
-              assert pkg.testzip() is None, "ZPK integrity failed"
-          print("Official compiled ZPK:",dest, dest.stat().st_size)
+          from zipfile import ZipFile
+          from io import BytesIO
+          zabfiles=list(Path('zepp-project/dist').rglob('*.zab'))
+          assert len(zabfiles)==1, zabfiles
+          with ZipFile(zabfiles[0]) as zab:
+            print('ZAB files',zab.namelist())
+            zpkfiles=[x for x in zab.namelist() if x.endswith('.zpk')]
+            assert zpkfiles, 'No compiled ZPK in ZAB'
+            raw=zab.read(zpkfiles[0])
+          dest=Path('releases/DEAL_GNB_Balance2_Official_1.0.4.zpk')
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_bytes(raw)
+          with ZipFile(BytesIO(raw)) as zpk:
+            assert zpk.testzip() is None
+            assert any(x.endswith('device.zip') for x in zpk.namelist())
+            print('Compiled ZPK verified; files:',zpk.namelist())
+          print('Published package size:',dest.stat().st_size)
           PY
-      - name: Publish compiled ZPK in GitHub
+
+      - name: Publish built ZPK and preview
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/DEAL_GNB_Balance2_Official_1.0.3.zpk
+          git add releases/DEAL_GNB_Balance2_Official_1.0.4.zpk previews/DEAL_GNB_v1.0.4_background.png
           if ! git diff --cached --quiet; then
-            git commit -m "Publish v1.0.3 aligned full-screen artwork and real AOD"
+            git commit -m "Publish compiled watchface 1.0.4 with custom AOD"
             git push
           fi
-      - name: Upload compiled package for review
-        uses: actions/upload-artifact@v4
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: DEAL_GNB_Balance2_Zeus_Build
+          name: DEAL_GNB_Balance2_1.0.4_Compiled
           path: zepp-project/dist/**
