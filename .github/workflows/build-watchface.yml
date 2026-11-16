@@ -144,6 +144,37 @@ jobs:
         run: timeout 360s zeus build
       - name: Inspect output
         run: find zepp-project/dist -maxdepth 5 -type f -printf '%p %s bytes\n'
+      - name: Extract compiled ZPK and verify integrity
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, BadZipFile
+          packages=list(Path("zepp-project/dist").rglob("*.zab"))
+          assert len(packages)==1, f"Expected a single ZAB, found: {packages}"
+          with ZipFile(packages[0]) as zab:
+              print("ZAB entries:", zab.namelist())
+              candidates=[x for x in zab.namelist() if x.endswith(".zpk") and not x.endswith("/")]
+              assert len(candidates)>=1, "Compiled ZAB does not contain a ZPK package"
+              zpk=zab.read(candidates[0])
+          dest=Path("releases/DEAL_GNB_Balance2_Official_1.0.1.zpk")
+          dest.write_bytes(zpk)
+          with ZipFile(dest) as pkg:
+              names=pkg.namelist()
+              print("ZPK entries:",names)
+              assert any(n.lower()=="device.zip" for n in names), "device.zip missing"
+              assert pkg.testzip() is None, "ZPK integrity failed"
+          print("Official compiled ZPK:",dest, dest.stat().st_size)
+          PY
+      - name: Publish compiled ZPK in GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add releases/DEAL_GNB_Balance2_Official_1.0.1.zpk
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish officially compiled Balance 2 test package"
+            git push
+          fi
       - name: Upload compiled package for review
         uses: actions/upload-artifact@v4
         with:
