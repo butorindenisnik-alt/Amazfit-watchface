@@ -6,7 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/build-watchface.yml'
-      - 'scripts/build_v106.py'
+      - 'scripts/build_v107.py'
 
 permissions:
   contents: write
@@ -27,14 +27,14 @@ jobs:
 
       - name: Generate watchface and inspect assets
         run: |
-          python3 scripts/build_v106.py
+          python3 scripts/build_v107.py
           python3 - <<'PY'
           import json
           from pathlib import Path
           from PIL import Image
           app = json.loads(Path('zepp-project/app.json').read_text())
           assert app['targets']['default-target']['module']['watchface']['lockscreen'] == 1
-          assert app['app']['version']['name'] == '1.0.6'
+          assert app['app']['version']['name'] == '1.0.7'
           img=Image.open('zepp-project/assets/default-target/images/background.png')
           assert img.size == (480,480), img.size
           from PIL import Image
@@ -48,6 +48,10 @@ jobs:
           contours=Path('zepp-project/assets/default-target/images/aod_digits')
           assert len(list(contours.glob('*.png'))) == 10, "Expected outlined 0-9 glyph assets"
           assert 'ПОНЕДЕЛЬНИК' in js and "getMonth()" in js
+          assert "seconds=label(399,218,52,69,52" in js
+          assert "widgets.bat=label(94,374,62,39,21" in js
+          build_source=Path('scripts/build_v107.py').read_text()
+          assert 'ad.arc(' not in build_source, "Unwanted AOD arcs remain"
           print('Source verified, real full-size background:',img.size)
           PY
 
@@ -71,7 +75,7 @@ jobs:
             zpkfiles=[x for x in zab.namelist() if x.endswith('.zpk')]
             assert zpkfiles, 'No compiled ZPK in ZAB'
             raw=zab.read(zpkfiles[0])
-          dest=Path('releases/DEAL_GNB_Balance2_Official_1.0.6.zpk')
+          dest=Path('releases/DEAL_GNB_Balance2_Official_1.0.7.zpk')
           dest.parent.mkdir(parents=True,exist_ok=True)
           dest.write_bytes(raw)
           with ZipFile(BytesIO(raw)) as zpk:
@@ -85,13 +89,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/DEAL_GNB_Balance2_Official_1.0.6.zpk previews/DEAL_GNB_v1.0.6_background.png previews/DEAL_GNB_v1.0.6_aod.png
+          git add releases/DEAL_GNB_Balance2_Official_1.0.7.zpk previews/DEAL_GNB_v1.0.7_background.png previews/DEAL_GNB_v1.0.7_aod.png
           if ! git diff --cached --quiet; then
-            git commit -m "Publish compiled watchface 1.0.6 with custom AOD"
+            git commit -m "Publish compiled watchface 1.0.7 with custom AOD"
             git push
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: DEAL_GNB_Balance2_1.0.6_Compiled
+          name: DEAL_GNB_Balance2_1.0.7_Compiled
           path: zepp-project/dist/**
