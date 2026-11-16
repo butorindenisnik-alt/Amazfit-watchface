@@ -1,21 +1,15 @@
 # DEAL_ГНБ — Amazfit Balance 2
 
-Фирменный циферблат в стиле ГНБ, Zepp OS, дисплей 480 × 480.
+Фирменный циферблат ГНБ под Zepp OS, экран 480 × 480.
 
-## Рабочая тестовая сборка (официальный компилятор Zeus)
+## Актуальная версия v1.0.2
 
-- Файл: [DEAL_GNB_Balance2_Official_1.0.1.zpk](releases/DEAL_GNB_Balance2_Official_1.0.1.zpk)
-- Прямой адрес: https://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.0.1.zpk
-- Результат GitHub Actions: https://github.com/butorindenisnik-alt/Amazfit-watchface/actions/runs/43923471040
+- [Скачать ZPK для Amazfit Balance 2](releases/DEAL_GNB_Balance2_Official_1.0.2.zpk)
+- [Сборка официальным Zeus CLI](https://github.com/butorindenisnik-alt/Amazfit-watchface/actions/runs/43928319743) — успешно завершена.
+- QR для Developer Mode: `zpkd1://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.0.2.zpk`.
 
-**Сборка Zeus CLI прошла успешно, но работа на физических Amazfit Balance 2 пока не подтверждена.**
-В версии 1.0.1 динамические показатели: время, дата, заряд, шаги и пульс.
-Данные погоды пока отключены до подтверждения стабильности.
+В v1.0.2 увеличены и выровнены графика верхнего блока, крупные цифры времени и нижние показания, добавлено отображение даты на AOD. Установка ГНБ в верхней части увеличена; исправлена компоновка штанги. Погода пока в тестовом режиме без живых данных.
 
-**НЕ устанавливайте `releases/DEAL_GNB_Balance2_TEST.zpk`.**
-Это старый экспериментальный пакет, вызывавший чёрный экран. Он оставлен здесь только потому, что из него автоматически восстанавливаются исходные графические ресурсы в GitHub Actions.
+**Zeus-сборка прошла успешно, но версия 1.0.2 пока не подтверждена испытанием на физических часах.** Если после установки появятся ошибки, переключите циферблат на стандартный через Zepp.
 
-Для установки через Zepp Developer Mode используется QR с адресом
-`zpkd1://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.0.1.zpk`.
-
-Если после установки виден чёрный экран, верните стандартный циферблат через Zepp и сообщите об ошибке, не выполняйте сброс устройства.
+Не устанавливайте старый `releases/DEAL_GNB_Balance2_TEST.zpk`: этот экспериментальный пакет давал чёрный экран. Он сохраняется только как источник графических ресурсов для GitHub Actions.
