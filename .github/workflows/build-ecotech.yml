@@ -1,4 +1,4 @@
-name: Build EcoTech Balance 2 watchface v1.0.5 with Zeus
+name: Build EcoTech Balance 2 watchface v1.0.6 with Zeus
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
     paths:
       - '.github/workflows/build-ecotech.yml'
       - 'scripts/ecotech_v100.b85'
-      - 'scripts/build_ecotech_v105.py'
+      - 'scripts/build_ecotech_v106.py'
       - 'scripts/ecotech_v105.delta.b64'
 
 permissions:
@@ -29,14 +29,14 @@ jobs:
 
       - name: Generate and verify 480x480 main dial and AOD
         run: |
-          python3 scripts/build_ecotech_v105.py
+          python3 scripts/build_ecotech_v106.py
           python3 - <<'PY'
           import json
           from pathlib import Path
           from PIL import Image
           app=json.loads(Path('zepp-project/app.json').read_text())
           assert app['app']['appId'] == 7761543
-          assert app['app']['version']['name'] == '1.0.5'
+          assert app['app']['version']['name'] == '1.0.6'
           assert app['targets']['default-target']['module']['watchface']['lockscreen'] == 1
           for p in ('background.png','aod_bg.png'):
               img=Image.open('zepp-project/assets/default-target/images/'+p)
@@ -48,9 +48,14 @@ jobs:
               assert key in js, key
           assert 'ui.data_type.WEATHER_CURRENT' not in js, 'Unwanted weather number still shown'
           assert "w.sec=label(397,204,59,61,37" in js, 'Seconds alignment not updated'
+          assert js.count('ui.widget.IMG_TIME')==2, 'Normal and AOD must both use native clocks'
+          assert 'upd(w.hours' not in js and 'upd(w.minutes' not in js
+          assert 't.getHours()' not in js, 'JS-driven hour display must be removed'
+          assert len(list(Path('zepp-project/assets/default-target/images/normal_time/hour').glob('*.png'))) == 10
+          assert len(list(Path('zepp-project/assets/default-target/images/normal_time/minute').glob('*.png'))) == 10
           assert js.count('hit(') == 4
           assert "w.battery=label(212,333,56,29,20" in js, 'Battery text not lowered'
-          assert 'upd(w.hours' in js and 'upd(w.minutes' in js
+          assert 'upd(w.date' in js and 'upd(w.sec' in js
           print('EcoTech brand, AOD, sensor fields and 4 launch zones verified')
           PY
 
@@ -74,7 +79,7 @@ jobs:
               candidate=[s for s in names if s.endswith('.zpk')]
               assert candidate, names
               raw=zab.read(candidate[0])
-          dest=Path('releases/ECOTECH_Balance2_Official_1.0.5.zpk')
+          dest=Path('releases/ECOTECH_Balance2_Official_1.0.6.zpk')
           dest.parent.mkdir(parents=True,exist_ok=True)
           dest.write_bytes(raw)
           with ZipFile(BytesIO(raw)) as zpk:
@@ -87,15 +92,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/ECOTECH_Balance2_Official_1.0.5.zpk
-          git add previews/ECOTECH_Balance2_1.0.5_normal.png
-          git add previews/ECOTECH_Balance2_1.0.5_aod.png
+          git add releases/ECOTECH_Balance2_Official_1.0.6.zpk
+          git add previews/ECOTECH_Balance2_1.0.6_normal.png
+          git add previews/ECOTECH_Balance2_1.0.6_aod.png
           if ! git diff --cached --quiet; then
-            git commit -m "Publish EcoTech Balance 2 watchface v1.0.5 with AOD"
+            git commit -m "Publish EcoTech Balance 2 watchface v1.0.6 with AOD"
             git push
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ECOTECH_Balance2_1.0.5_Compiled
+          name: ECOTECH_Balance2_1.0.6_Compiled
           path: zepp-project/dist/**
