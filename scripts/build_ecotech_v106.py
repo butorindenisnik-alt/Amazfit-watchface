@@ -15,7 +15,7 @@ js=js_path.read_text(encoding='utf-8')
 
 old_hours=" w.hours=label(40,155,168,114,114,LIGHT,'00',N)"
 old_minutes=" w.minutes=label(236,155,166,114,114,CYAN,'00',N)"
-old_update="   upd(w.hours,pad(t.getHours()));upd(w.minutes,pad(t.getMinutes()))"
+old_update="  upd(w.hours,pad(t.getHours()));upd(w.minutes,pad(t.getMinutes()))"
 for old in (old_hours,old_minutes,old_update):
     assert js.count(old)==1, ('Cannot locate expected clock code',old)
 
