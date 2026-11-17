@@ -50,7 +50,7 @@ jobs:
           assert 'ПОНЕДЕЛЬНИК' in js and "getMonth()" in js
           assert "seconds=label(375,229,76,70,43" in js
           assert "SYSTEM_APP_COUNTDOWN" in js and "SYSTEM_APP_HR" in js and "SYSTEM_APP_WEATHER" in js
-          assert js.count("tapZone(")==4, "Expected helper and three touch zones"
+          assert js.count("tapZone(")==3 and "const tapZone=" in js, "Expected three touch zones"
           assert "show_level:NL" in js
           tap=Image.open('zepp-project/assets/default-target/images/tap_clear.png')
           assert tap.mode=='RGBA' and tap.getpixel((0,0))[3]==0
