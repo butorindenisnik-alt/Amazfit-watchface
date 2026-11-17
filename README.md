@@ -1,19 +1,18 @@
 # DEAL_ГНБ — фирменный циферблат Amazfit Balance 2
 
-## Актуальная тестовая версия 1.1.0
+## Актуальная тестовая версия v1.1.1 — интерактивные зоны
 
-- [Установочный ZPK v1.1.0](releases/DEAL_GNB_Balance2_Official_1.1.0.zpk)
-- [Фон основной версии](previews/DEAL_GNB_v1.1.0_background.png)
-- [AOD](previews/DEAL_GNB_v1.1.0_aod.png)
-- [Успешная сборка Zeus CLI](https://github.com/butorindenisnik-alt/Amazfit-watchface/actions/runs/43948044728)
+- [Установочный пакет ZPK v1.1.1](releases/DEAL_GNB_Balance2_Official_1.1.1.zpk)
+- [Zeus CLI, успешная сборка](https://github.com/butorindenisnik-alt/Amazfit-watchface/actions/runs/44010752943)
+- QR строка: `zpkd1://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.1.1.zpk`
 
-Для Zepp Developer Mode QR содержит:
-`zpkd1://raw.githubusercontent.com/butorindenisnik-alt/Amazfit-watchface/main/releases/DEAL_GNB_Balance2_Official_1.1.0.zpk`
+Невидимые сенсорные зоны на обычном экране:
+- **Минуты** (x255–372, y202–295): открывает штатный **обратный отсчёт**.
+- **Пульс** (x258–332, y338–413): открывает штатное приложение **Пульс**.
+- **Погода** (x340–414, y338–413): открывает штатную **Погоду**.
 
-### Изменения версии 1.1.0
+Для AOD касания отключены. Графика, расположение секунд, дата, шаги, батарея и AOD унаследованы от v1.1.0 без изменений. Все три ссылки используют официальные системные идентификаторы Zepp OS и `@zos/router`.
 
-- Секунды перемещены на **12 пикселей вправо**: `x: 363 → 375`.
-- Вертикальное положение, размер секунд, основные часы, показатели, погода, фон и AOD **не изменены**.
-- Изменения успешно скомпилированы Zeus CLI; ZPK проверен.
+**Статус:** компиляция Zeus CLI и целостность архива подтверждены, фактические переходы на Amazfit Balance 2 требуют проверки на часах.
 
-**Статус:** тестовая версия для проверки на физических часах. Для возврата к прежнему варианту используйте [1.0.9](releases/DEAL_GNB_Balance2_Official_1.0.9.zpk).
+[Вернуться на проверенную v1.1.0](releases/DEAL_GNB_Balance2_Official_1.1.0.zpk)
