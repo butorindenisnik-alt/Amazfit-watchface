@@ -1,0 +1,26 @@
+name: Inspect EcoTech 1.0.5 generated clock logic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/inspect-ecotech.yml'
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install --quiet pillow
+      - name: Inspect current compiled source for time update bugs
+        run: |
+          python3 scripts/build_ecotech_v105.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('zepp-project/watchface/default-target/index.js').read_text()
+          print('======== WATCHFACE INDEX JS ========')
+          print(s)
+          print('======== END WATCHFACE INDEX JS ========')
+          PY
