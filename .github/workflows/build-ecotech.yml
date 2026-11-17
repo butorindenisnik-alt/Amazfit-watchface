@@ -1,4 +1,4 @@
-name: Build EcoTech Balance 2 watchface v1.0.3 with Zeus
+name: Build EcoTech Balance 2 watchface v1.0.4 with Zeus
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
     paths:
       - '.github/workflows/build-ecotech.yml'
       - 'scripts/ecotech_v100.b85'
-      - 'scripts/build_ecotech_v103.py'
+      - 'scripts/build_ecotech_v104.py'
 
 permissions:
   contents: write
@@ -28,14 +28,14 @@ jobs:
 
       - name: Generate and verify 480x480 main dial and AOD
         run: |
-          python3 scripts/build_ecotech_v103.py
+          python3 scripts/build_ecotech_v104.py
           python3 - <<'PY'
           import json
           from pathlib import Path
           from PIL import Image
           app=json.loads(Path('zepp-project/app.json').read_text())
           assert app['app']['appId'] == 7761543
-          assert app['app']['version']['name'] == '1.0.3'
+          assert app['app']['version']['name'] == '1.0.4'
           assert app['targets']['default-target']['module']['watchface']['lockscreen'] == 1
           for p in ('background.png','aod_bg.png'):
               img=Image.open('zepp-project/assets/default-target/images/'+p)
@@ -72,7 +72,7 @@ jobs:
               candidate=[s for s in names if s.endswith('.zpk')]
               assert candidate, names
               raw=zab.read(candidate[0])
-          dest=Path('releases/ECOTECH_Balance2_Official_1.0.3.zpk')
+          dest=Path('releases/ECOTECH_Balance2_Official_1.0.4.zpk')
           dest.parent.mkdir(parents=True,exist_ok=True)
           dest.write_bytes(raw)
           with ZipFile(BytesIO(raw)) as zpk:
@@ -85,15 +85,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/ECOTECH_Balance2_Official_1.0.3.zpk
-          git add previews/ECOTECH_Balance2_1.0.3_normal.png
-          git add previews/ECOTECH_Balance2_1.0.3_aod.png
+          git add releases/ECOTECH_Balance2_Official_1.0.4.zpk
+          git add previews/ECOTECH_Balance2_1.0.4_normal.png
+          git add previews/ECOTECH_Balance2_1.0.4_aod.png
           if ! git diff --cached --quiet; then
-            git commit -m "Publish EcoTech Balance 2 watchface v1.0.3 with AOD"
+            git commit -m "Publish EcoTech Balance 2 watchface v1.0.4 with AOD"
             git push
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ECOTECH_Balance2_1.0.3_Compiled
+          name: ECOTECH_Balance2_1.0.4_Compiled
           path: zepp-project/dist/**
