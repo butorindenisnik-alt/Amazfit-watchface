@@ -1,0 +1,97 @@
+name: Build EcoTech Balance 2 watchface with Zeus
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-ecotech.yml'
+      - 'scripts/ecotech_v100.b85'
+      - 'scripts/build_ecotech_v100.py'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Pillow for original EcoTech logo and illustration
+        run: python3 -m pip install --quiet pillow
+
+      - name: Generate and verify 480x480 main dial and AOD
+        run: |
+          python3 scripts/build_ecotech_v100.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from PIL import Image
+          app=json.loads(Path('zepp-project/app.json').read_text())
+          assert app['app']['appId'] == 7761543
+          assert app['app']['version']['name'] == '1.0.0'
+          assert app['targets']['default-target']['module']['watchface']['lockscreen'] == 1
+          for p in ('background.png','aod_bg.png'):
+              img=Image.open('zepp-project/assets/default-target/images/'+p)
+              assert img.size == (480,480), (p,img.size)
+          js=Path('zepp-project/watchface/default-target/index.js').read_text()
+          for key in ('ONLY_NORMAL','ONAL_AOD','IMG_TIME','WEATHER_CURRENT',
+                      'SYSTEM_APP_COUNTDOWN','SYSTEM_APP_CALENDAR',
+                      'SYSTEM_APP_HR','SYSTEM_APP_WEATHER'):
+              assert key in js, key
+          assert js.count('hit(') == 4
+          assert 'upd(w.hours' in js and 'upd(w.minutes' in js
+          print('EcoTech brand, AOD, sensor fields and 4 launch zones verified')
+          PY
+
+      - name: Install official Zeus CLI
+        run: npm install --global @zeppos/zeus-cli
+
+      - name: Compile EcoTech watchface
+        working-directory: zepp-project
+        run: timeout 360s zeus build
+
+      - name: Verify ZPK and extract install package
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          from io import BytesIO
+          sources=list(Path('zepp-project/dist').rglob('*.zab'))
+          assert len(sources)==1, sources
+          with ZipFile(sources[0]) as zab:
+              names=zab.namelist()
+              candidate=[s for s in names if s.endswith('.zpk')]
+              assert candidate, names
+              raw=zab.read(candidate[0])
+          dest=Path('releases/ECOTECH_Balance2_Official_1.0.0.zpk')
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_bytes(raw)
+          with ZipFile(BytesIO(raw)) as zpk:
+              assert zpk.testzip() is None
+              assert any(p.endswith('device.zip') for p in zpk.namelist())
+          print('EcoTech ZPK validated:',dest.stat().st_size,'bytes')
+          PY
+
+      - name: Publish EcoTech package and preview (without altering DEAL GNB)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add releases/ECOTECH_Balance2_Official_1.0.0.zpk
+          git add previews/ECOTECH_Balance2_1.0.0_normal.png
+          git add previews/ECOTECH_Balance2_1.0.0_aod.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish EcoTech Balance 2 watchface v1.0.0 with AOD"
+            git push
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ECOTECH_Balance2_1.0.0_Compiled
+          path: zepp-project/dist/**
