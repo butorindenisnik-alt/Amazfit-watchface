@@ -35,38 +35,14 @@ mask_draw.rectangle((0,0,480,306),fill=0)
 # Ink black just inside the ring, not across tick marks.
 clean.paste((3,4,9,255),(0,0,480,480))
 bg.paste(clean,(0,0),clean_mask)
-# White-dominant edition: keep the AMOLED black background, but turn most
-# golden artwork into cool silver. Leave only tiny structural yellow accents.
-def tone_yellow_to_silver(im, keep=None):
-    im=im.convert("RGBA")
-    p=im.load()
-    for yy in range(im.height):
-        for xx in range(im.width):
-            r,g,b,a=p[xx,yy]
-            if a<24 or r<95 or g<70:
-                continue
-            if r>g*1.04 and g>b*1.28 and b<185:
-                if keep is not None and keep(xx,yy):
-                    continue
-                v=min(248,max(100,int((r*0.55+g*0.45)*0.94)+29))
-                p[xx,yy]=(v,min(255,v+2),min(255,v+7),a)
-    return im
-
-# Keep yellow only in the brand's "ГНБ", two hour marks and a slender drill accent.
-bg=tone_yellow_to_silver(
-    bg,
-    keep=lambda x,y: (260<=x<=364 and 46<=y<=83)
-      or (227<=x<=250 and (y<=29 or y>=452))
-      or (246<=x<=418 and 134<=y<=163)
-)
 d=ImageDraw.Draw(bg)
 WHITE=(238,241,248,255)
 YELLOW=(255,199,16,255)
-STEEL=(145,155,170,255)
+STEEL=(87,95,109,255)
 # A single thin top divider and distinct vertical column dividers.
 d.line((91,327,389,327),fill=STEEL,width=2)
 for x in (164,252,344):
-    d.line((x,343,x,410),fill=(114,123,138,255),width=2)
+    d.line((x,343,x,410),fill=(66,71,82,255),width=2)
 # No bottom or oblique contour crosses the battery percentage or the ring.
 # Four pictograms are centered within the safe circular bottom zone.
 # Battery
@@ -75,9 +51,9 @@ d.rectangle((146,348,150,356),fill=WHITE)
 d.polygon([(132,344),(124,353),(131,353),(128,360),(141,350),(136,350)],fill=YELLOW)
 # Steps
 for x,y,rx,ry in [(182,341,10,14),(198,341,11,14),(178,355,9,11),(195,358,9,11)]:
-    d.ellipse((x,y,x+rx,y+ry),fill=WHITE)
+    d.ellipse((x,y,x+rx,y+ry),fill=YELLOW)
 # Heart
-d.polygon([(289,366),(272,353),(273,344),(281,341),(289,346),(296,341),(307,345),(306,353)],fill=WHITE)
+d.polygon([(289,366),(272,353),(273,344),(281,341),(289,346),(296,341),(307,345),(306,353)],fill=YELLOW)
 d.line([(277,350),(283,350),(286,345),(290,356),(295,350),(302,350)],fill=(8,10,14,255),width=2)
 # Weather
 d.ellipse((365,340,383,357),outline=YELLOW,width=2)
@@ -115,28 +91,27 @@ ft=get_font(45)
 w1=ad.textlength("DEAL_",font=ft)
 w2=ad.textlength("ГНБ",font=ft)
 x=(480-w1-w2)/2
-ad.text((x,62),"DEAL_",font=ft,fill=S)
-ad.text((x+w1,62),"ГНБ",font=ft,fill=Y)
+ad.text((x,62),"DEAL_",font=ft,fill=Y)
+ad.text((x+w1,62),"ГНБ",font=ft,fill=S)
 # Real corrected rig from original artwork. Alpha derived from luminosity makes
 # surrounding black unobtrusive and avoids a rectangular background.
 source=original.crop((58,90,426,187)).resize((400,106),Image.Resampling.LANCZOS)
 lum=source.convert("L").point(lambda z: max(0,min(255,int((z-10)*1.6))))
 source.putalpha(lum)
-source=tone_yellow_to_silver(source,keep=lambda x,y: 250<=x<=395 and 50<=y<=85)
 aod.alpha_composite(source,(40,125))
 ad=ImageDraw.Draw(aod)
-ad.line((69,205,411,205),fill=S,width=2)
+ad.line((69,205,411,205),fill=Y,width=3)
 ad.line((69,205,94,205),fill=(155,160,169,255),width=2)
 # Colon belongs to the fixed art, the four outline digits are automatic.
 ad.rounded_rectangle((229,269,242,283),radius=3,fill=Y)
 ad.rounded_rectangle((229,314,242,328),radius=3,fill=Y)
-ad.line((85,355,161,355),fill=S,width=2)
-ad.line((319,355,395,355),fill=S,width=2)
+ad.line((85,355,161,355),fill=Y,width=2)
+ad.line((319,355,395,355),fill=Y,width=2)
 ad.line((122,445,194,445),fill=(130,138,149,255),width=2)
 ad.line((286,445,358,445),fill=(130,138,149,255),width=2)
 aod.save(ASSETS/"aod_bg.png")
 
-# System-drawn outlined gold numerals in AOD (0-9); black empty interior.
+# System-drawn outlined WHITE numerals in AOD (0-9); black empty interior.
 outdir=ASSETS/"aod_digits"
 outdir.mkdir(exist_ok=True)
 for number in range(10):
@@ -156,12 +131,33 @@ rad=ImageDraw.Draw(reference)
 fd=get_font(40)
 date="16.11"
 tw=rad.textlength(date,font=fd)
-rad.text(((480-tw)/2,363),date,font=fd,fill=S)
+rad.text((88,363),date,font=fd,fill=Y)
 fw=get_font(23)
 weekday="ПОНЕДЕЛЬНИК"
 tw=rad.textlength(weekday,font=fw)
 rad.text(((480-tw)/2,413),weekday,font=fw,fill=S)
 
+# Temperature from the Zepp weather service, not an extra sensor poll.
+# Separate AOD yellow glyphs leave the white NORMAL glyph atlas untouched.
+aod_weather=ASSETS/"aod_weather"
+aod_weather.mkdir(exist_ok=True)
+for ch in "0123456789":
+    glyph=Image.new("RGBA",(24,41),(0,0,0,0))
+    ink=ImageDraw.Draw(glyph)
+    ftw=get_font(32)
+    bounds=ink.textbbox((0,0),ch,font=ftw)
+    ink.text(((24-(bounds[2]-bounds[0]))/2-bounds[0],
+              (41-(bounds[3]-bounds[1]))/2-bounds[1]),
+              ch,font=ftw,fill=Y)
+    glyph.save(aod_weather/(ch+".png"))
+minus=Image.new("RGBA",(17,41),(0,0,0,0))
+ImageDraw.Draw(minus).line((2,22,15,22),fill=Y,width=3)
+minus.save(aod_weather/"minus.png")
+# Illustrative, not live, number in preview only.
+preview_draw=ImageDraw.Draw(reference)
+preview_draw.text((274,362),"18",font=get_font(37),fill=Y)
+preview_draw.text((330,365),"°",font=get_font(27),fill=Y)
+preview_draw.line((242,371,242,399),fill=(110,115,125,255),width=1)
 # One transparent image for watchface touch overlays.
 Image.new("RGBA",(1,1),(0,0,0,0)).save(ASSETS/"tap_clear.png")
 
@@ -191,9 +187,9 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":15,"name":"1.1.4"},
+    "appType":"watchface", "version":{"code":16,"name":"1.1.5"},
     "vender":"DEAL_GNB",
-    "description":"White-dominant dial, restrained yellow highlights, native synchronized time",
+    "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
   },
   "permissions":["data:user.hd.step","data:user.hd.heart_rate"],
@@ -269,7 +265,7 @@ WatchFace({
       src:'images/main_time/colon.png',show_level:NL
     })
     widgets.seconds=label(375,229,76,70,43,YELLOW,'00',NL)
-    widgets.date=label(55,290,370,36,23,WHITE,'',NL)
+    widgets.date=label(55,290,370,36,23,YELLOW,'',NL)
     widgets.bat=label(106,369,60,40,21,WHITE,'--%',NL)
     widgets.steps=label(166,369,77,40,25,WHITE,'--',NL)
     widgets.heart=label(260,369,70,40,25,WHITE,'--',NL)
@@ -296,8 +292,18 @@ WatchFace({
       minute_array:contours,minute_space:0,minute_zero:1,
       minute_align:ui.align.LEFT,minute_follow:0,show_level:AL
     })
-    widgets.aodDate=label(110,357,260,51,41,WHITE,'16.11',AL)
-    widgets.aodWeek=label(40,409,400,43,24,YELLOW,'ПОНЕДЕЛЬНИК',AL)
+    widgets.aodDate=label(75,359,160,51,38,YELLOW,'16.11',AL)
+    // Firmware weather binding can present cached outdoor forecast in AOD.
+    // No additional timer or networking introduced.
+    const aodForecast=[0,1,2,3,4,5,6,7,8,9].map(n=>'images/aod_weather/'+n+'.png')
+    widgets.aodForecast=ui.createWidget(ui.widget.TEXT_IMG,{
+      x:px(263),y:px(368),w:px(91),h:px(41),
+      type:ui.data_type.WEATHER_CURRENT,
+      font_array:aodForecast,negative_image:'images/aod_weather/minus.png',
+      align_h:ui.align.CENTER_H,h_space:0,show_level:AL
+    })
+    label(355,368,24,41,27,YELLOW,'°',AL)
+    widgets.aodWeek=label(40,409,400,43,24,WHITE,'ПОНЕДЕЛЬНИК',AL)
 
     const FULL=['','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ']
     const refresh=()=>{
@@ -376,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.4_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.4_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.5_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.5_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
