@@ -59,9 +59,15 @@ jobs:
           assert "widgets.aodDate=label(75,359,160,51,38,YELLOW" in js
           assert "widgets.aodWeek=label(40,409,400,43,24,WHITE" in js
           assert "aodForecast" in js and "show_level:AL" in js
-          previous=Image.open('previews/DEAL_GNB_v1.1.3_background.png').convert('RGB')
-          assert img.convert('RGB').tobytes()==previous.tobytes(), "Normal screen differs from v1.1.3!"
-          print('Original NORMAL screen pixel match confirmed, AOD-only changes')
+          # Approved ordinary screen (v1.1.3) has exact Git blob SHA below.
+          # This protects the unchanged main artwork without retaining old builds.
+          from hashlib import sha1
+          main_bytes=Path('zepp-project/assets/default-target/images/background.png').read_bytes()
+          gitblob=sha1(b'blob '+str(len(main_bytes)).encode()+b'\0'+main_bytes).hexdigest()
+          assert gitblob == '1236aa3472c5d26b465a2f1092f5a1c30cbb5bdd', (
+              'Main background changed from approved original: '+gitblob
+          )
+          print('Original NORMAL screen unchanged, AOD-only changes validated')
           assert 'ПОНЕДЕЛЬНИК' in js and "getMonth()" in js
           assert "seconds=label(375,229,76,70,43" in js
           assert "SYSTEM_APP_COUNTDOWN" in js and "SYSTEM_APP_HR" in js and "SYSTEM_APP_WEATHER" in js and "SYSTEM_APP_CALENDAR" in js
