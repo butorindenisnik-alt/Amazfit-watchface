@@ -35,14 +35,38 @@ mask_draw.rectangle((0,0,480,306),fill=0)
 # Ink black just inside the ring, not across tick marks.
 clean.paste((3,4,9,255),(0,0,480,480))
 bg.paste(clean,(0,0),clean_mask)
+# White-dominant edition: keep the AMOLED black background, but turn most
+# golden artwork into cool silver. Leave only tiny structural yellow accents.
+def tone_yellow_to_silver(im, keep=None):
+    im=im.convert("RGBA")
+    p=im.load()
+    for yy in range(im.height):
+        for xx in range(im.width):
+            r,g,b,a=p[xx,yy]
+            if a<24 or r<95 or g<70:
+                continue
+            if r>g*1.04 and g>b*1.28 and b<185:
+                if keep is not None and keep(xx,yy):
+                    continue
+                v=min(248,max(100,int((r*0.55+g*0.45)*0.94)+29))
+                p[xx,yy]=(v,min(255,v+2),min(255,v+7),a)
+    return im
+
+# Keep yellow only in the brand's "ГНБ", two hour marks and a slender drill accent.
+bg=tone_yellow_to_silver(
+    bg,
+    keep=lambda x,y: (260<=x<=364 and 46<=y<=83)
+      or (227<=x<=250 and (y<=29 or y>=452))
+      or (246<=x<=418 and 134<=y<=163)
+)
 d=ImageDraw.Draw(bg)
 WHITE=(238,241,248,255)
 YELLOW=(255,199,16,255)
-STEEL=(87,95,109,255)
+STEEL=(145,155,170,255)
 # A single thin top divider and distinct vertical column dividers.
 d.line((91,327,389,327),fill=STEEL,width=2)
 for x in (164,252,344):
-    d.line((x,343,x,410),fill=(66,71,82,255),width=2)
+    d.line((x,343,x,410),fill=(114,123,138,255),width=2)
 # No bottom or oblique contour crosses the battery percentage or the ring.
 # Four pictograms are centered within the safe circular bottom zone.
 # Battery
@@ -51,9 +75,9 @@ d.rectangle((146,348,150,356),fill=WHITE)
 d.polygon([(132,344),(124,353),(131,353),(128,360),(141,350),(136,350)],fill=YELLOW)
 # Steps
 for x,y,rx,ry in [(182,341,10,14),(198,341,11,14),(178,355,9,11),(195,358,9,11)]:
-    d.ellipse((x,y,x+rx,y+ry),fill=YELLOW)
+    d.ellipse((x,y,x+rx,y+ry),fill=WHITE)
 # Heart
-d.polygon([(289,366),(272,353),(273,344),(281,341),(289,346),(296,341),(307,345),(306,353)],fill=YELLOW)
+d.polygon([(289,366),(272,353),(273,344),(281,341),(289,346),(296,341),(307,345),(306,353)],fill=WHITE)
 d.line([(277,350),(283,350),(286,345),(290,356),(295,350),(302,350)],fill=(8,10,14,255),width=2)
 # Weather
 d.ellipse((365,340,383,357),outline=YELLOW,width=2)
@@ -98,15 +122,16 @@ ad.text((x+w1,62),"ГНБ",font=ft,fill=Y)
 source=original.crop((58,90,426,187)).resize((400,106),Image.Resampling.LANCZOS)
 lum=source.convert("L").point(lambda z: max(0,min(255,int((z-10)*1.6))))
 source.putalpha(lum)
+source=tone_yellow_to_silver(source,keep=lambda x,y: 250<=x<=395 and 50<=y<=85)
 aod.alpha_composite(source,(40,125))
 ad=ImageDraw.Draw(aod)
-ad.line((69,205,411,205),fill=Y,width=3)
+ad.line((69,205,411,205),fill=S,width=2)
 ad.line((69,205,94,205),fill=(155,160,169,255),width=2)
 # Colon belongs to the fixed art, the four outline digits are automatic.
 ad.rounded_rectangle((229,269,242,283),radius=3,fill=Y)
 ad.rounded_rectangle((229,314,242,328),radius=3,fill=Y)
-ad.line((85,355,161,355),fill=Y,width=2)
-ad.line((319,355,395,355),fill=Y,width=2)
+ad.line((85,355,161,355),fill=S,width=2)
+ad.line((319,355,395,355),fill=S,width=2)
 ad.line((122,445,194,445),fill=(130,138,149,255),width=2)
 ad.line((286,445,358,445),fill=(130,138,149,255),width=2)
 aod.save(ASSETS/"aod_bg.png")
@@ -121,7 +146,7 @@ for number in range(10):
     bb=dd.textbbox((0,0),str(number),font=f,stroke_width=4)
     xx=(82-(bb[2]-bb[0]))/2-bb[0]
     yy=(135-(bb[3]-bb[1]))/2-bb[1]
-    dd.text((xx,yy),str(number),font=f,fill=(0,0,0,255),stroke_width=4,stroke_fill=Y)
+    dd.text((xx,yy),str(number),font=f,fill=(0,0,0,255),stroke_width=4,stroke_fill=S)
     layer.save(outdir/(str(number)+".png"))
 # Static AOD reference preview for visual check only (not bundled as watch face).
 reference=aod.copy()
@@ -135,18 +160,40 @@ rad.text(((480-tw)/2,363),date,font=fd,fill=S)
 fw=get_font(23)
 weekday="ПОНЕДЕЛЬНИК"
 tw=rad.textlength(weekday,font=fw)
-rad.text(((480-tw)/2,413),weekday,font=fw,fill=Y)
+rad.text(((480-tw)/2,413),weekday,font=fw,fill=S)
 
 # One transparent image for watchface touch overlays.
 Image.new("RGBA",(1,1),(0,0,0,0)).save(ASSETS/"tap_clear.png")
+
+# MAIN CLOCK: system-owned IMG_TIME glyph set, unlike the former manually
+# refreshed TEXT clock which stopped updating while AOD remained correct.
+# Screen design remains in the same horizontal band (x 72–368, y 192–298).
+from PIL import ImageFont
+native_dir=ASSETS/"main_time"
+native_dir.mkdir(exist_ok=True)
+font_path=next((q for q in font_paths if Path(q).exists()), None)
+for number in range(10):
+    g=Image.new("RGBA",(76,106),(0,0,0,0))
+    p=ImageDraw.Draw(g)
+    gf=ImageFont.truetype(font_path,108) if font_path else ImageFont.load_default()
+    b=p.textbbox((0,0),str(number),font=gf)
+    p.text(((76-(b[2]-b[0]))/2-b[0],(106-(b[3]-b[1]))/2-b[1]),str(number),
+           font=gf,fill=(244,244,248,255))
+    g.resize((68,106), Image.Resampling.LANCZOS).save(native_dir/(str(number)+".png"))
+colon=Image.new("RGBA",(18,106),(0,0,0,0))
+cd=ImageDraw.Draw(colon)
+cd.rounded_rectangle((4,37,14,48),radius=5,fill=(244,244,248,255))
+cd.rounded_rectangle((4,75,14,86),radius=5,fill=(244,244,248,255))
+colon.save(native_dir/"colon.png")
+
 
 APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":12,"name":"1.1.1"},
+    "appType":"watchface", "version":{"code":15,"name":"1.1.4"},
     "vender":"DEAL_GNB",
-    "description":"Three invisible tappable areas for timer, heart rate and weather",
+    "description":"White-dominant dial, restrained yellow highlights, native synchronized time",
     "icon":"images/background.png"
   },
   "permissions":["data:user.hd.step","data:user.hd.heart_rate"],
@@ -176,7 +223,7 @@ import ui from '@zos/ui'
 import { px } from '@zos/utils'
 import { Time, Battery, Step, HeartRate } from '@zos/sensor'
 import * as timer from '@zos/timer'
-import { launchApp, SYSTEM_APP_COUNTDOWN, SYSTEM_APP_HR, SYSTEM_APP_WEATHER } from '@zos/router'
+import { launchApp, SYSTEM_APP_COUNTDOWN, SYSTEM_APP_HR, SYSTEM_APP_WEATHER, SYSTEM_APP_CALENDAR } from '@zos/router'
 
 const NL=ui.show_level.ONLY_NORMAL
 const AL=ui.show_level.ONAL_AOD
@@ -205,9 +252,24 @@ WatchFace({
       show_level:NL
     })
     // The time is larger than before; lower values are under their corresponding icons.
-    widgets.clock=label(13,183,421,116,124,WHITE,'00:00',NL)
+    // System-owned time widget: remains in sync with AOD even across
+    // suspended animation callbacks, Bluetooth disconnects, and screen wakes.
+    const clockGlyphs=[0,1,2,3,4,5,6,7,8,9].map(n=>'images/main_time/'+n+'.png')
+    ui.createWidget(ui.widget.IMG_TIME,{
+      hour_startX:px(72),hour_startY:px(192),
+      hour_array:clockGlyphs,hour_space:0,hour_zero:1,
+      hour_align:ui.align.LEFT,
+      minute_startX:px(232),minute_startY:px(192),
+      minute_array:clockGlyphs,minute_space:0,minute_zero:1,
+      minute_align:ui.align.LEFT,minute_follow:0,
+      show_level:NL
+    })
+    ui.createWidget(ui.widget.IMG,{
+      x:px(213),y:px(192),w:px(18),h:px(106),
+      src:'images/main_time/colon.png',show_level:NL
+    })
     widgets.seconds=label(375,229,76,70,43,YELLOW,'00',NL)
-    widgets.date=label(55,290,370,36,23,YELLOW,'',NL)
+    widgets.date=label(55,290,370,36,23,WHITE,'',NL)
     widgets.bat=label(106,369,60,40,21,WHITE,'--%',NL)
     widgets.steps=label(166,369,77,40,25,WHITE,'--',NL)
     widgets.heart=label(260,369,70,40,25,WHITE,'--',NL)
@@ -239,9 +301,8 @@ WatchFace({
 
     const FULL=['','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ']
     const refresh=()=>{
-      const t=z(timeSensor.getHours())+':'+z(timeSensor.getMinutes())
       const day=z(timeSensor.getDate())+' '+MONTH[timeSensor.getMonth()]+' '+timeSensor.getFullYear()+'  '+(WD[timeSensor.getDay()]||'')
-      set(widgets.clock,t);set(widgets.date,day)
+      set(widgets.date,day)
       set(widgets.aodDate,z(timeSensor.getDate())+'.'+z(timeSensor.getMonth()))
       set(widgets.aodWeek,FULL[timeSensor.getDay()]||'')
     }
@@ -250,7 +311,15 @@ WatchFace({
     // Seconds run in normal watchface only, never included in AOD.
     // The timer is stopped while the face is not visible when supported.
     let secTimer=null
-    const secTick=()=>set(widgets.seconds,z(timeSensor.getSeconds()))
+    let dateCheckMinute=-1
+    const secTick=()=>{
+      set(widgets.seconds,z(timeSensor.getSeconds()))
+      const nowMinute=timeSensor.getMinutes()
+      if(nowMinute!==dateCheckMinute){
+        dateCheckMinute=nowMinute
+        refresh()
+      }
+    }
     secTick()
     safe(()=>{secTimer=timer.createTimer(1000,1000,secTick,{})})
 
@@ -284,10 +353,12 @@ WatchFace({
       return overlay
     }
     // Main clock: right-hand minutes only, NOT hours or little seconds.
-    tapZone(255,202,117,93,SYSTEM_APP_COUNTDOWN)
+    tapZone(255,202,117,84,SYSTEM_APP_COUNTDOWN)
     // Bottom two individual complications: avoid neighbouring dividers.
     tapZone(258,338,74,75,SYSTEM_APP_HR)
     tapZone(340,338,74,75,SYSTEM_APP_WEATHER)
+    // Centered date band: avoids minutes (ending y286) and other metrics.
+    tapZone(85,287,310,43,SYSTEM_APP_CALENDAR)
 
     safe(()=>{
       const s=new HeartRate()
@@ -305,7 +376,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.1_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.1_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.4_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.4_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
