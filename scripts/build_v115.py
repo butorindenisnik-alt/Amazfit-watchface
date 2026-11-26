@@ -156,7 +156,7 @@ minus.save(aod_weather/"minus.png")
 # Illustrative, not live, number in preview only.
 preview_draw=ImageDraw.Draw(reference)
 preview_draw.text((319,360),"18",font=get_font(40),fill=Y)
-preview_draw.text((368,346),"°",font=get_font(49),fill=Y)
+preview_draw.text((368,352),"°",font=get_font(49),fill=Y)
 preview_draw.line((242,371,242,399),fill=(110,115,125,255),width=1)
 # One transparent image for watchface touch overlays.
 Image.new("RGBA",(1,1),(0,0,0,0)).save(ASSETS/"tap_clear.png")
@@ -187,7 +187,7 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":20,"name":"1.1.9"},
+    "appType":"watchface", "version":{"code":21,"name":"1.1.10"},
     "vender":"DEAL_GNB",
     "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
@@ -302,7 +302,7 @@ WatchFace({
       font_array:aodForecast,negative_image:'images/aod_weather/minus.png',
       align_h:ui.align.CENTER_H,h_space:0,show_level:AL
     })
-    label(367,350,34,47,46,YELLOW,'°',AL)
+    label(367,356,34,47,46,YELLOW,'°',AL)
     widgets.aodWeek=label(40,409,400,43,24,WHITE,'ПОНЕДЕЛЬНИК',AL)
 
     const FULL=['','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ']
@@ -382,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.9_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.9_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.10_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.10_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
