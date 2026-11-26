@@ -34,7 +34,7 @@ jobs:
           from PIL import Image
           app = json.loads(Path('zepp-project/app.json').read_text())
           assert app['targets']['default-target']['module']['watchface']['lockscreen'] == 1
-          assert app['app']['version']['name'] == '1.1.10'
+          assert app['app']['version']['name'] == '1.1.11'
           img=Image.open('zepp-project/assets/default-target/images/background.png')
           assert img.size == (480,480), img.size
           from PIL import Image
@@ -107,7 +107,7 @@ jobs:
             zpkfiles=[x for x in zab.namelist() if x.endswith('.zpk')]
             assert zpkfiles, 'No compiled ZPK in ZAB'
             raw=zab.read(zpkfiles[0])
-          dest=Path('releases/DEAL_GNB_Balance2_Official_1.1.10.zpk')
+          dest=Path('releases/DEAL_GNB_Balance2_Official_1.1.11.zpk')
           dest.parent.mkdir(parents=True,exist_ok=True)
           dest.write_bytes(raw)
           with ZipFile(BytesIO(raw)) as zpk:
@@ -121,13 +121,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add releases/DEAL_GNB_Balance2_Official_1.1.10.zpk previews/DEAL_GNB_v1.1.10_background.png previews/DEAL_GNB_v1.1.10_aod.png
+          git add releases/DEAL_GNB_Balance2_Official_1.1.11.zpk previews/DEAL_GNB_v1.1.11_background.png previews/DEAL_GNB_v1.1.11_aod.png
           if ! git diff --cached --quiet; then
-            git commit -m "Publish compiled watchface 1.1.10 with custom AOD"
+            git commit -m "Publish compiled watchface 1.1.11 with custom AOD"
             git push
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: DEAL_GNB_Balance2_1.1.10_Compiled
+          name: DEAL_GNB_Balance2_1.1.11_Compiled
           path: zepp-project/dist/**
