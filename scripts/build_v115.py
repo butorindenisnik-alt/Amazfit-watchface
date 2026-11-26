@@ -103,8 +103,8 @@ ad=ImageDraw.Draw(aod)
 ad.line((69,205,411,205),fill=Y,width=3)
 ad.line((69,205,94,205),fill=(155,160,169,255),width=2)
 # Colon belongs to the fixed art, the four outline digits are automatic.
-ad.rounded_rectangle((229,269,242,283),radius=3,fill=Y)
-ad.rounded_rectangle((229,314,242,328),radius=3,fill=Y)
+ad.rounded_rectangle((229,269,242,283),radius=3,fill=S)
+ad.rounded_rectangle((229,314,242,328),radius=3,fill=S)
 ad.line((85,355,161,355),fill=Y,width=2)
 ad.line((319,355,395,355),fill=Y,width=2)
 ad.line((122,445,194,445),fill=(130,138,149,255),width=2)
@@ -187,7 +187,7 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":24,"name":"1.1.13"},
+    "appType":"watchface", "version":{"code":25,"name":"1.1.14"},
     "vender":"DEAL_GNB",
     "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
@@ -382,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.13_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.13_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.14_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.14_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
