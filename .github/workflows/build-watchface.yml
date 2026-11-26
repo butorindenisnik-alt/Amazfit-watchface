@@ -57,7 +57,7 @@ jobs:
           aod_weather=Path('zepp-project/assets/default-target/images/aod_weather')
           assert len(list(aod_weather.glob('*.png'))) == 11
           assert "widgets.aodDate=label(75,359,160,51,38,YELLOW" in js
-          assert "widgets.aodWeek=label(40,409,400,43,24,WHITE" in js
+          assert "widgets.aodWeek=label(40,409,400,43,24,YELLOW" in js
           assert "aodForecast" in js and "show_level:AL" in js
           # Approved ordinary screen (v1.1.3) has exact Git blob SHA below.
           # This protects the unchanged main artwork without retaining old builds.
