@@ -135,7 +135,7 @@ rad.text((88,363),date,font=fd,fill=Y)
 fw=get_font(23)
 weekday="ПОНЕДЕЛЬНИК"
 tw=rad.textlength(weekday,font=fw)
-rad.text(((480-tw)/2,413),weekday,font=fw,fill=S)
+rad.text(((480-tw)/2,413),weekday,font=fw,fill=Y)
 
 # Temperature from the Zepp weather service, not an extra sensor poll.
 # Separate AOD yellow glyphs leave the white NORMAL glyph atlas untouched.
@@ -187,7 +187,7 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":23,"name":"1.1.12"},
+    "appType":"watchface", "version":{"code":24,"name":"1.1.13"},
     "vender":"DEAL_GNB",
     "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
@@ -303,7 +303,7 @@ WatchFace({
       align_h:ui.align.CENTER_H,h_space:0,show_level:AL
     })
     label(358,356,34,47,46,YELLOW,'°',AL)
-    widgets.aodWeek=label(40,409,400,43,24,WHITE,'ПОНЕДЕЛЬНИК',AL)
+    widgets.aodWeek=label(40,409,400,43,24,YELLOW,'ПОНЕДЕЛЬНИК',AL)
 
     const FULL=['','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ']
     const refresh=()=>{
@@ -382,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.12_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.12_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.13_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.13_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
