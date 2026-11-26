@@ -155,8 +155,8 @@ ImageDraw.Draw(minus).line((2,22,15,22),fill=Y,width=3)
 minus.save(aod_weather/"minus.png")
 # Illustrative, not live, number in preview only.
 preview_draw=ImageDraw.Draw(reference)
-preview_draw.text((274,362),"18",font=get_font(37),fill=Y)
-preview_draw.text((330,365),"°",font=get_font(27),fill=Y)
+preview_draw.text((282,362),"18",font=get_font(37),fill=Y)
+preview_draw.text((346,365),"°",font=get_font(27),fill=Y)
 preview_draw.line((242,371,242,399),fill=(110,115,125,255),width=1)
 # One transparent image for watchface touch overlays.
 Image.new("RGBA",(1,1),(0,0,0,0)).save(ASSETS/"tap_clear.png")
@@ -187,7 +187,7 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":16,"name":"1.1.5"},
+    "appType":"watchface", "version":{"code":17,"name":"1.1.6"},
     "vender":"DEAL_GNB",
     "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
@@ -272,12 +272,12 @@ WatchFace({
     // Native Zepp watch-face temperature binding. Avoid the deprecated app sensor.
     const digits=[0,1,2,3,4,5,6,7,8,9].map(n=>'images/weather/'+n+'.png')
     widgets.weather=ui.createWidget(ui.widget.TEXT_IMG,{
-      x:px(332),y:px(373),w:px(53),h:px(33),
+      x:px(340),y:px(373),w:px(43),h:px(33),
       type:ui.data_type.WEATHER_CURRENT,
       font_array:digits,negative_image:'images/weather/minus.png',
       align_h:ui.align.CENTER_H,h_space:0,show_level:NL
     })
-    label(385,371,12,35,19,WHITE,'°',NL)
+    label(384,369,16,24,18,WHITE,'°',NL)
 
     // AOD: full-screen dark artistic rig + truly dynamic outlined numerals.
     ui.createWidget(ui.widget.IMG,{
@@ -297,12 +297,12 @@ WatchFace({
     // No additional timer or networking introduced.
     const aodForecast=[0,1,2,3,4,5,6,7,8,9].map(n=>'images/aod_weather/'+n+'.png')
     widgets.aodForecast=ui.createWidget(ui.widget.TEXT_IMG,{
-      x:px(263),y:px(368),w:px(91),h:px(41),
+      x:px(274),y:px(368),w:px(72),h:px(41),
       type:ui.data_type.WEATHER_CURRENT,
       font_array:aodForecast,negative_image:'images/aod_weather/minus.png',
       align_h:ui.align.CENTER_H,h_space:0,show_level:AL
     })
-    label(355,368,24,41,27,YELLOW,'°',AL)
+    label(346,366,22,28,23,YELLOW,'°',AL)
     widgets.aodWeek=label(40,409,400,43,24,WHITE,'ПОНЕДЕЛЬНИК',AL)
 
     const FULL=['','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ']
@@ -382,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.5_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.5_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.6_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.6_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
