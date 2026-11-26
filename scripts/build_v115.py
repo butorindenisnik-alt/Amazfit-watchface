@@ -92,7 +92,7 @@ w1=ad.textlength("DEAL_",font=ft)
 w2=ad.textlength("ГНБ",font=ft)
 x=(480-w1-w2)/2
 ad.text((x,62),"DEAL_",font=ft,fill=Y)
-ad.text((x+w1,62),"ГНБ",font=ft,fill=S)
+ad.text((x+w1,62),"ГНБ",font=ft,fill=Y)
 # Real corrected rig from original artwork. Alpha derived from luminosity makes
 # surrounding black unobtrusive and avoids a rectangular background.
 source=original.crop((58,90,426,187)).resize((400,106),Image.Resampling.LANCZOS)
@@ -187,7 +187,7 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":22,"name":"1.1.11"},
+    "appType":"watchface", "version":{"code":23,"name":"1.1.12"},
     "vender":"DEAL_GNB",
     "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
@@ -382,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.11_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.11_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.12_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.12_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
