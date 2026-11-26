@@ -155,8 +155,8 @@ ImageDraw.Draw(minus).line((2,26,15,26),fill=Y,width=3)
 minus.save(aod_weather/"minus.png")
 # Illustrative, not live, number in preview only.
 preview_draw=ImageDraw.Draw(reference)
-preview_draw.text((297,360),"18",font=get_font(40),fill=Y)
-preview_draw.text((355,355),"°",font=get_font(35),fill=Y)
+preview_draw.text((307,360),"18",font=get_font(40),fill=Y)
+preview_draw.text((365,353),"°",font=get_font(39),fill=Y)
 preview_draw.line((242,371,242,399),fill=(110,115,125,255),width=1)
 # One transparent image for watchface touch overlays.
 Image.new("RGBA",(1,1),(0,0,0,0)).save(ASSETS/"tap_clear.png")
@@ -187,7 +187,7 @@ APP={
   "configVersion":"v3",
   "app":{
     "appId":7761421, "appName":"DEAL_GNB Balance 2",
-    "appType":"watchface", "version":{"code":18,"name":"1.1.7"},
+    "appType":"watchface", "version":{"code":19,"name":"1.1.8"},
     "vender":"DEAL_GNB",
     "description":"Original main screen; AOD white time, yellow date and native forecast temperature",
     "icon":"images/background.png"
@@ -297,12 +297,12 @@ WatchFace({
     // No additional timer or networking introduced.
     const aodForecast=[0,1,2,3,4,5,6,7,8,9].map(n=>'images/aod_weather/'+n+'.png')
     widgets.aodForecast=ui.createWidget(ui.widget.TEXT_IMG,{
-      x:px(290),y:px(361),w:px(66),h:px(51),
+      x:px(300),y:px(361),w:px(66),h:px(51),
       type:ui.data_type.WEATHER_CURRENT,
       font_array:aodForecast,negative_image:'images/aod_weather/minus.png',
       align_h:ui.align.CENTER_H,h_space:0,show_level:AL
     })
-    label(355,358,25,34,32,YELLOW,'°',AL)
+    label(365,356,28,38,36,YELLOW,'°',AL)
     widgets.aodWeek=label(40,409,400,43,24,WHITE,'ПОНЕДЕЛЬНИК',AL)
 
     const FULL=['','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА','ВОСКРЕСЕНЬЕ']
@@ -382,7 +382,7 @@ dest=ROOT/"watchface/default-target/index.js"
 dest.parent.mkdir(parents=True,exist_ok=True)
 dest.write_text(SCRIPT.strip()+"\n",encoding="utf-8")
 Path("previews").mkdir(exist_ok=True)
-bg.convert("RGB").save("previews/DEAL_GNB_v1.1.7_background.png",optimize=True)
-reference.save("previews/DEAL_GNB_v1.1.7_aod.png",optimize=True)
+bg.convert("RGB").save("previews/DEAL_GNB_v1.1.8_background.png",optimize=True)
+reference.save("previews/DEAL_GNB_v1.1.8_aod.png",optimize=True)
 print("Built source; background", (ASSETS/"background.png").stat().st_size,
       "app lockscreen",APP["targets"]["default-target"]["module"]["watchface"]["lockscreen"])
